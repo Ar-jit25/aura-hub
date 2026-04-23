@@ -14,16 +14,9 @@ const Timer = () => {
     let interval = null;
     if (isActive) {
       interval = setInterval(() => {
-        if (seconds > 0) {
-          setSeconds(seconds - 1);
-        } else if (minutes > 0) {
-          setMinutes(minutes - 1);
-          setSeconds(59);
-        } else {
-          clearInterval(interval);
-          setIsActive(false);
-          // Auto-switch mode or play alert could be added here
-        }
+        if (seconds > 0) setSeconds(seconds - 1);
+        else if (minutes > 0) { setMinutes(minutes - 1); setSeconds(59); }
+        else { clearInterval(interval); setIsActive(false); }
       }, 1000);
     }
     return () => clearInterval(interval);
@@ -34,12 +27,7 @@ const Timer = () => {
   const resetTimer = (newMode = mode) => {
     setIsActive(false);
     setMode(newMode);
-    
-    let mins = 25;
-    if (newMode === 'work') mins = workTime;
-    else if (newMode === 'short') mins = shortTime;
-    else if (newMode === 'long') mins = longTime;
-    
+    let mins = newMode === 'work' ? workTime : newMode === 'short' ? shortTime : longTime;
     setMinutes(mins);
     setSeconds(0);
   };
@@ -49,69 +37,167 @@ const Timer = () => {
     if (targetMode === 'work') setWorkTime(mins);
     if (targetMode === 'short') setShortTime(mins);
     if (targetMode === 'long') setLongTime(mins);
-
-    if (!isActive && mode === targetMode) {
-      setMinutes(mins);
-      setSeconds(0);
-    }
+    if (!isActive && mode === targetMode) { setMinutes(mins); setSeconds(0); }
   };
 
   const formatTime = (time) => String(time).padStart(2, '0');
 
   return (
-    <div className="timer-container glass">
-      <div className="mode-tabs">
+    <div className="monumental-timer">
+      <div className="timer-nav">
         <button className={mode === 'work' ? 'active' : ''} onClick={() => resetTimer('work')}>Focus</button>
         <button className={mode === 'short' ? 'active' : ''} onClick={() => resetTimer('short')}>Short Break</button>
         <button className={mode === 'long' ? 'active' : ''} onClick={() => resetTimer('long')}>Long Break</button>
       </div>
 
-      <div className="clock-display">
-        <span className="digit">{formatTime(minutes)}</span>
-        <span className="separator">:</span>
-        <span className="digit">{formatTime(seconds)}</span>
-      </div>
-
-      <div className="custom-config">
-        <div className="input-group">
-          <label>Minutes</label>
-          {mode === 'work' && <input type="number" value={workTime} onChange={(e) => handleTimeChange(e.target.value, 'work')} min="1" max="120" />}
-          {mode === 'short' && <input type="number" value={shortTime} onChange={(e) => handleTimeChange(e.target.value, 'short')} min="1" max="60" />}
-          {mode === 'long' && <input type="number" value={longTime} onChange={(e) => handleTimeChange(e.target.value, 'long')} min="1" max="180" />}
+      <div className="digital-display">
+        <div className="time-block">
+          <span className="numbers">{formatTime(minutes)}</span>
+          <span className="label">MIN</span>
+        </div>
+        <span className="colon-blink">:</span>
+        <div className="time-block">
+          <span className="numbers">{formatTime(seconds)}</span>
+          <span className="label">SEC</span>
         </div>
       </div>
 
-      <div className="controls">
-        <button className={`main-btn ${isActive ? 'pause' : 'start'}`} onClick={toggleTimer}>
-          {isActive ? 'Pause' : 'Start ' + mode.charAt(0).toUpperCase() + mode.slice(1)}
+      <div className="timer-controls">
+        <button className={`play-btn ${isActive ? 'pause' : 'play'}`} onClick={toggleTimer}>
+          {isActive ? 'Pause' : 'Start Session'}
         </button>
-        <button className="reset-btn" onClick={() => resetTimer()}>Reset</button>
+        <div className="edit-zone">
+          <input 
+            type="number" 
+            value={mode === 'work' ? workTime : mode === 'short' ? shortTime : longTime} 
+            onChange={(e) => handleTimeChange(e.target.value, mode)} 
+          />
+          <span>mins</span>
+        </div>
       </div>
 
       <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap');
+        .monumental-timer {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 40px;
+        }
 
-        .timer-container { padding: 35px; display: flex; flex-direction: column; align-items: center; min-height: 480px; justify-content: space-between; gap: 20px;}
-        
-        .mode-tabs { display: flex; gap: 8px; background: rgba(255, 255, 255, 0.03); padding: 5px; border-radius: 14px; }
-        .mode-tabs button { background: transparent; border: none; color: var(--text-secondary); padding: 10px 18px; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: inherit; }
-        .mode-tabs button.active { background: var(--primary); color: white; }
+        .timer-nav {
+          display: flex;
+          gap: 20px;
+          padding: 10px;
+        }
 
-        .clock-display { font-family: 'JetBrains Mono', monospace; font-size: 7rem; font-weight: 700; color: white; text-shadow: 0 0 30px rgba(139, 92, 246, 0.4); letter-spacing: -5px; }
-        .separator { animation: blink 2s infinite; opacity: 0.8; margin-bottom: 10px; }
-        @keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+        .timer-nav button {
+          background: transparent;
+          border: none;
+          color: var(--text-dim);
+          font-size: 0.9rem;
+          letter-spacing: 3px;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: 0.3s;
+          position: relative;
+        }
 
-        .custom-config { display: flex; flex-direction: column; align-items: center; }
-        .input-group { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 0.9rem; }
-        .input-group input { width: 60px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); border-radius: 8px; padding: 6px; color: white; text-align: center; font-family: inherit; }
+        .timer-nav button.active {
+          color: var(--primary);
+          font-weight: 600;
+        }
 
-        .controls { display: flex; gap: 15px; width: 100%; }
-        .main-btn { flex: 2; padding: 18px; border-radius: 12px; border: none; font-weight: 600; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
-        .main-btn.start { background: white; color: var(--bg-dark); }
-        .main-btn.pause { background: var(--secondary); color: white; }
-        .reset-btn { flex: 1; padding: 18px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.02); color: white; cursor: pointer; }
+        .timer-nav button.active::after {
+          content: '';
+          position: absolute;
+          bottom: -8px;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background: var(--primary);
+          box-shadow: 0 0 10px var(--primary);
+        }
 
-        @media (max-width: 450px) { .clock-display { font-size: 5rem; } }
+        .digital-display {
+          font-family: 'JetBrains Mono', monospace;
+          display: flex;
+          align-items: baseline;
+          gap: 20px;
+          color: white;
+        }
+
+        .time-block {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .numbers {
+          font-size: clamp(8rem, 15vw, 15rem);
+          font-weight: 700;
+          line-height: 0.8;
+          text-shadow: 0 0 50px rgba(192, 132, 252, 0.3);
+        }
+
+        .label {
+          font-size: 0.9rem;
+          color: var(--text-dim);
+          letter-spacing: 5px;
+          margin-top: 10px;
+        }
+
+        .colon-blink {
+          font-size: 8rem;
+          opacity: 0.3;
+          animation: blink 2s infinite;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 0.1; } 50% { opacity: 0.6; } }
+
+        .timer-controls {
+          display: flex;
+          align-items: center;
+          gap: 30px;
+          background: rgba(255,255,255,0.03);
+          padding: 10px 30px;
+          border-radius: 50px;
+          border: 1px solid var(--glass-border);
+        }
+
+        .play-btn {
+          background: var(--primary);
+          color: white;
+          border: none;
+          padding: 12px 30px;
+          border-radius: 30px;
+          font-weight: 600;
+          letter-spacing: 1px;
+          cursor: pointer;
+          transition: 0.3s;
+        }
+
+        .edit-zone {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 0.8rem;
+          color: var(--text-dim);
+          text-transform: uppercase;
+        }
+
+        .edit-zone input {
+          width: 50px;
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid var(--glass-border);
+          color: white;
+          text-align: center;
+          font-family: inherit;
+        }
+
+        @media (max-width: 1200px) {
+          .numbers { font-size: 8rem; }
+        }
       `}</style>
     </div>
   );

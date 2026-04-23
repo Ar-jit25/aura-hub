@@ -1,76 +1,63 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const Task = require('../models/Task');
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(__dirname, '../tasks.json');
-
-const readDB = async () => {
-    try {
-        const data = await fs.readFile(DB_PATH, 'utf-8');
-        return JSON.parse(data);
-    } catch {
-        return [];
-    }
-};
-
-const writeDB = async (data) => {
-    await fs.writeFile(DB_PATH, JSON.stringify(data, null, 2));
-};
-
-export const getTasks = async (req, res) => {
-    const tasks = await readDB();
+exports.getTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.user.id }).sort({ createdAt: -1 });
     res.json(tasks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-export const addTask = async (req, res) => {
-    const { text } = req.body;
-    if (!text) return res.status(400).json({ error: 'Text is required' });
-
-    const tasks = await readDB();
-    const newTask = { id: Date.now(), text, notes: '', subtasks: [], completed: false };
-    tasks.push(newTask);
-    await writeDB(tasks);
-    res.status(201).json(newTask);
-};
-
-export const deleteTask = async (req, res) => {
-    const { id } = req.params;
-    let tasks = await readDB();
-    tasks = tasks.filter(t => t.id !== parseInt(id));
-    await writeDB(tasks);
-    res.status(204).send();
-};
-
-export const toggleTask = async (req, res) => {
-    const { id } = req.params;
-    const tasks = await readDB();
-    const task = tasks.find(t => t.id === parseInt(id));
-    if (!task) return res.status(404).json({ error: 'Task not found' });
-
-    task.completed = !task.completed;
-    await writeDB(tasks);
-    res.json(task);
-};
-
-export const updateTask = async (req, res) => {
-    const { id } = req.params;
+exports.addTask = async (req, res) => {
+  try {
     const { text, notes, subtasks } = req.body;
-    const tasks = await readDB();
-    const task = tasks.find(t => t.id === parseInt(id));
-    if (!task) return res.status(404).json({ error: 'Task not found' });
-
-    if (text !== undefined) task.text = text;
-    if (notes !== undefined) task.notes = notes;
-    if (subtasks !== undefined) task.subtasks = subtasks;
-    
-    await writeDB(tasks);
-    res.json(task);
+    const task = new Task({
+      user: req.user.id,
+      text,
+      notes,
+      subtasks
+    });
+    await task.save();
+    res.status(201).json(task);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-export const clearCompleted = async (req, res) => {
-    let tasks = await readDB();
-    tasks = tasks.filter(t => !t.completed);
-    await writeDB(tasks);
-    res.status(204).send();
+exports.toggleTask = async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.user.id });
+    if (!task) return res.status(404).json({ message: 'Task not found' });
+    
+    task.completed = !task.completed;
+    await task.save();
+    res.json(task);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.updateTask = async (req, res) => {
+  try {
+    const task = await Task.findOneAndUpdate(
+      { _id: req.params.id, user: req.user.id },
+      req.body,
+      { new: true }
+    );
+    if (!task) return res.status(404).json({ message: 'Task not found' });
+    res.json(task);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.deleteTask = async (req, res) => {
+  try {
+    const task = await Task.findOneAndDelete({ _id: req.params.id, user: req.user.id });
+    if (!task) return res.status(404).json({ message: 'Task not found' });
+    res.json({ message: 'Task removed' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
