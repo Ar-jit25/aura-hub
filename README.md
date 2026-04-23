@@ -2,7 +2,6 @@
 
 **Aura Hub** is a state-of-the-art, "Panoramic Zen" productivity dashboard designed for deep focus and high-performance workflow. It replaces cluttered list managers with a monumental, immersive COMMAND CENTER that keeps your intentions clear and your environment serene.
 
-![Aura Hub Interface Preview](https://via.placeholder.com/1200x600?text=Aura+Hub+Panoramic+Interface)
 
 ## ✨ Features
 
