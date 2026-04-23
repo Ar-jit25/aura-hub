@@ -45,7 +45,8 @@ npm install
 npm run dev
 ```
 
-### 3. Usage
+### 3. Usage- currently on local servers, not deployed yet
+
 1. Open **Aura Hub** at `http://localhost:5175/`.
 2. **Establish Aura**: Create your unique handle and a secure password.
 3. **Unlock Hub**: Log in to access your private intentions.
